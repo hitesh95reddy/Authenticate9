@@ -1,6 +1,6 @@
 const { Sequelize, DataTypes } = require('sequelize');
 
-const sequelize = new Sequelize('postgres://postgres:postgres@localhost:5432/authenticate9');
+const sequelize = new Sequelize('postgres://yfqfzupq:TRGJpQ18jJjyjvRb5tnFqGY4VulEKxV6@abul.db.elephantsql.com/yfqfzupq');
 
 const RegisteredUser = sequelize.define(
     'RegisteredUser',
