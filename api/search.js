@@ -3,8 +3,8 @@ const router=express.Router()
 const {RegisteredUser,Contact,SpamNumber}=require('../database')
 const { Op, Sequelize } = require('sequelize');
 
-router.get('/searchByName/:name',async (req,res)=>{
-    const {name}=req.params;
+router.get('/searchByName',async (req,res)=>{
+    const {name}=req.query;
     if(name){
     try{
         const registeredUsers1 = await RegisteredUser.findAll({
@@ -101,21 +101,42 @@ router.get('/searchByName/:name',async (req,res)=>{
     }
 })
 
-router.get('/searchByNumber/:number',async (req,res)=>{
-    const {number}=req.params;
+router.get('/searchByNumber',async (req,res)=>{
+    const {number}=req.query;
+
     if(number){
+        const spamNumbers = await SpamNumber.findAll({
+            attributes: ['phone_number', [Sequelize.fn('COUNT', Sequelize.col('*')), 'spam_count']],
+            group: ['phone_number']
+          });
+          const spamNumbersDict = spamNumbers.reduce((acc, spamNumber) => {
+            //console.log(spamNumber.dataValues.spam_count, spamNumber.dataValues.phone_number)
+            acc[spamNumber.dataValues.phone_number] = spamNumber.dataValues.spam_count;
+            return acc;
+          }, {});  
+
         const registeredUsers = await RegisteredUser.findOne({where:{phone_number:number}});
         console.log('reg',registeredUsers)
         if(registeredUsers){
             console.log('reg',registeredUsers)
-            res.json({"results":registeredUsers});
+            res.json({"results":[{"name":registeredUsers.name,"phone_number":registeredUsers.phone_number,"no_of_users_reported_as_spam":spamNumbersDict[registeredUsers.phone_number] || 0,"email":registeredUsers.email}]});
         }else{
             const contacts = await Contact.findAll({attributes: ['name', 'phone_number'],where:{phone_number:number}});
             if(contacts.length>0){
                 console.log('con',contacts)
-                res.json({"results":contacts});
+                res.json({"results":contacts.map(contact=>{return {name:contact.name,phone_number:contact.phone_number,"no_of_users_reported_as_spam":spamNumbersDict[contact.phone_number] || 0}})});
             }else{
-                res.status(400).json({message:"No results found"});
+                const count = await SpamNumber.count({
+                    where: {
+                      phone_number: number
+                    }
+                  });
+                  if(count>0){
+                    res.json({number:number,msg:"Number is marked as spam by"+count+" users"});
+                  }else{
+                    res.json({err:"No user with this number exists"});
+                  
+                  }
             }
         }
     }else{
