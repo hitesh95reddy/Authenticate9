@@ -1,7 +1,7 @@
 const express=require('express')
 const router=express.Router()
 const {RegisteredUser,SpamNumber}=require('../database')
-const { Op } = require('sequelize');
+const { Op,Sequelize } = require('sequelize');
 
 router.post('/addSpam',async (req,res)=>{
     const {userid,phoneNumber}=req.body;
@@ -54,7 +54,10 @@ router.get('/allSpamReportedByUser',async (req,res)=>{
 })
 
 router.get('/allSpamNumbers',async (req,res)=>{
-    SpamNumber.findAll({attributes:['phone_number']}).then(spamNumbers=>{
+    SpamNumber.findAll({
+        attributes: ['phone_number', [Sequelize.fn('COUNT', Sequelize.col('*')), 'no_of_users_reported']],
+        group: ['phone_number']
+      }).then(spamNumbers=>{
         res.json(spamNumbers);
     }).catch(error=>{
         res.status(500).json({err:"Issue occurred"});
