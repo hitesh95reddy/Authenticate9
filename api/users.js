@@ -24,7 +24,7 @@ router.post('/register', async (req, res) => {
         password: hashedPassword,
         email: email
       });
-      res.json(user);
+      res.json({"message":"User Registered Successfully"});
     } catch (error) {
       if (error instanceof Sequelize.UniqueConstraintError) {
         res.status(400).json({ err: 'Phone Number already added by a registered user' });
@@ -43,7 +43,7 @@ router.post('/login',(req,res)=>{
         if(user){
             bcrypt.compare(password,user.password,(err,response)=>{
                 if(response){
-                    res.json({message:"User logged in"});
+                    res.json({message:"Login Successful"});
                 }else{
                     res.status(400).json({err:"Invalid username/password provided"});
                 }
