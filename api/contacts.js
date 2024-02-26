@@ -1,6 +1,7 @@
 const express=require('express')
 const router=express.Router()
 const {RegisteredUser,Contact}=require('../database')
+const { Op,Sequelize } = require('sequelize');
 
 router.post('/addContact',async (req,res)=>{
     const {userid,name,phoneNumber}=req.body;
@@ -15,7 +16,7 @@ router.post('/addContact',async (req,res)=>{
     try{
         RegisteredUser.findOne({where:{user_id:userid}}).then(user=>{
             if(user){
-                Contact.findOne({where:{phone_number:phoneNumber}}).then(contact=>{
+                Contact.findOne({where:{[Op.and]:[{phone_number:phoneNumber},{is_contact_of:userid}]}}).then(contact=>{
                     if(contact){
                         res.status(400).json({err:"Contact already exists"});
                     }else{
